@@ -19,15 +19,11 @@ docker run --rm -it --gpus all  -v /your/path/:/data video-subtitle-remover:late
 替换`/your/path/`为你需要处理的视频目录，
 进到容器后使用`python backend/main.py --input /your/path/video.mp4`使用。
 
-详细使用方法可使用:
-
-`python backend/main.py -h`
-
-更变的使用可添加bash脚本,并放置到PATH目录下:
+也可使用bash脚本，把以下内容复制到bash脚本中，并放置到PATH目录下:
 
 ```
 #!/bin/bash
-#假设脚本名为video-subtitle-remover
+#假设脚本命名为video-subtitle-remover
 docker run --rm -it --gpus all  -v "$(pwd)":/data video-subtitle-remover:latest /data/"$@"
 ```
 
