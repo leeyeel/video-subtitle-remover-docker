@@ -30,7 +30,7 @@ def str2bool(v):
     return v.lower() in ("true", "t", "1")
 
 
-def init_args():
+def parse_args(extra_args = None):
     parser = argparse.ArgumentParser()
     # params for prediction engine
     parser.add_argument("--use_gpu", type=str2bool, default=True)
@@ -135,12 +135,8 @@ def init_args():
 
     parser.add_argument("--show_log", type=str2bool, default=True)
     parser.add_argument("--use_onnx", type=str2bool, default=False)
-    return parser
-
-
-def parse_args():
-    parser = init_args()
-    return parser.parse_args()
+ 
+    return parser.parse_args(extra_args)
 
 
 def create_predictor(args, mode, logger):

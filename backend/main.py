@@ -6,6 +6,7 @@ from pathlib import Path
 import threading
 import cv2
 import sys
+import argparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -17,7 +18,6 @@ from backend.inpaint.sttn_inpaint import STTNInpaint, STTNVideoInpaint
 from backend.inpaint.lama_inpaint import LamaInpaint
 from backend.inpaint.video_inpaint import VideoInpaint
 from backend.tools.inpaint_tools import create_mask, batch_generator
-import importlib
 import platform
 import tempfile
 import multiprocessing
@@ -33,10 +33,9 @@ class SubtitleDetect:
     文本框检测类，用于检测视频帧中是否存在文本框
     """
 
-    def __init__(self, video_path, sub_area=None):
+    def __init__(self, video_path, sub_area=None, extra_args=None):
         # 获取参数对象
-        importlib.reload(config)
-        args = utility.parse_args()
+        args = utility.parse_args(extra_args)
         args.det_algorithm = 'DB'
         args.det_model_dir = config.DET_MODEL_PATH
         self.text_detector = TextDetector(args)
@@ -509,8 +508,7 @@ class SubtitleDetect:
 
 
 class SubtitleRemover:
-    def __init__(self, vd_path, sub_area=None, gui_mode=False):
-        importlib.reload(config)
+    def __init__(self, vd_path, sub_area=None, gui_mode=False, extra_args = None):
         # 线程锁
         self.lock = threading.RLock()
         # 用户指定的字幕区域位置
@@ -537,7 +535,7 @@ class SubtitleRemover:
         self.frame_height = int(self.video_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.frame_width = int(self.video_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         # 创建字幕检测对象
-        self.sub_detector = SubtitleDetect(self.video_path, self.sub_area)
+        self.sub_detector = SubtitleDetect(self.video_path, self.sub_area, extra_args)
         # 创建视频临时对象，windows下delete=True会有permission denied的报错
         self.video_temp_file = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
         # 创建视频写对象
@@ -910,14 +908,10 @@ class SubtitleRemover:
 
 if __name__ == '__main__':
     multiprocessing.set_start_method("spawn")
-    # 1. 提示用户输入视频路径
-    video_path = input(f"Please input video or image file path: ").strip()
-    # 判断视频路径是不是一个目录，是目录的化，批量处理改目录下的所有视频文件
-    # 2. 按以下顺序传入字幕区域
-    # sub_area = (ymin, ymax, xmin, xmax)
-    # 3. 新建字幕提取对象
-    if is_video_or_image(video_path):
-        sd = SubtitleRemover(video_path, sub_area=None)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input", type=str, help="输入视频或图片文件")
+    args,remaining = parser.parse_known_args()
+    if is_video_or_image(args.input):
+        sd = SubtitleRemover(args.input, sub_area=None, extra_args = remaining)
         sd.run()
-    else:
-        print(f'Invalid video path: {video_path}')
